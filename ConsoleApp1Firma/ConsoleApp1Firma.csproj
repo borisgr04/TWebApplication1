@@ -2,10 +2,55 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
   </PropertyGroup>
 	
 	<ItemGroup>
+		<PackageReference Include="Azure.Identity" Version="1.6.0" />
+		<PackageReference Include="Azure.Security.KeyVault.Certificates" Version="4.3.0" />
+		<PackageReference Include="Azure.Security.KeyVault.Secrets" Version="4.3.0" />
 		<PackageReference Include="itext7" Version="7.2.2" />
+	</ItemGroup>
+	
+	<ItemGroup>
+	  <None Update="OpenSsl\Example\ByaPkcs12_fd78d36646ab4af39f7f08f354fd86b9.cer">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Update="OpenSsl\Example\cert_key.p12">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Update="OpenSsl\Example\dest\hello_signed1.pdf">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Update="OpenSsl\Example\dest\hello_signed2.pdf">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Update="OpenSsl\Example\dest\hello_signed3.pdf">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Update="OpenSsl\Example\dest\hello_signed4.pdf">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Update="OpenSsl\Example\dest\hello_signed5.pdf">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Update="OpenSsl\Example\dest\hello_signed6.pdf">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Update="OpenSsl\Example\dest\hello_signed7.pdf">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Update="OpenSsl\Example\dest\hello_signed8.pdf">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Update="OpenSsl\Example\private.key">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Update="OpenSsl\Example\public.cer">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
+	  <None Update="OpenSsl\Example\testbya-ByaPkcs12-20220707.pfx">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
 	</ItemGroup>
 </Project>
