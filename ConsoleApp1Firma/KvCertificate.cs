@@ -36,6 +36,7 @@ namespace ConsoleApp1Firma
         {
             var clientSecret = new ClientSecretCredential("83a8a1a0-dfd1-43e6-976d-73889e9bc230", "fea0de43-0469-4577-a50e-c02d8f282442", "KeQ8Q~ZHka_TxGhfYhqseXx41RpSXYikczYYHaDq");
             var client = new CertificateClient(vaultUri: new Uri("https://testbya.vault.azure.net/"), credential: clientSecret);
+            //"ByACert"
             KeyVaultCertificateWithPolicy certificateWithPolicy = client.GetCertificate("ByaPkcs12");
             //client.GetCertificate()
             return certificateWithPolicy.Cer;
