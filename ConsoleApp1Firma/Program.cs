@@ -11,56 +11,7 @@ using Azure.Identity;
 
 namespace ConsoleApp1Firma
 {
-
     /*
-    internal class Program 
-    {
-        public static async Task Main(string[] args)
-        {
-            var clientId = "fea0de43-0469-4577-a50e-c02d8f282442";
-            var clientSecret = "KeQ8Q~ZHka_TxGhfYhqseXx41RpSXYikczYYHaDq";
-            var tenantId = "83a8a1a0-dfd1-43e6-976d-73889e9bc230";
-            var kvUrl = "https://testbya.vault.azure.net/";
-            var certificateName = "ByaPkcs12";
-            await GetCertificate(certificateName, clientId, clientSecret, kvUrl, tenantId);
-        }
-        public async static Task<X509Certificate2> GetCertificate(string certificateName, string clientId, string clientSecret, string keyVaultAddress, string tenantId)
-        {
-            ClientSecretCredential clientCredential = new ClientSecretCredential(tenantId, clientId, clientSecret);
-            var secretClient = new SecretClient(new Uri(keyVaultAddress), clientCredential);
-            var response = await secretClient.GetSecretAsync(certificateName);
-            var keyVaultSecret = response?.Value;
-            if (keyVaultSecret != null)
-            {
-                var privateKeyBytes = Convert.FromBase64String(keyVaultSecret.Value);
-                //Org.BouncyCastle.X509.X509Certificate[] chain = new Org.BouncyCastle.X509.X509Certificate[ce.Length];
-
-                Pkcs12Store pk12 = new Pkcs12Store(new MemoryStream(privateKeyBytes), "".ToCharArray());
-
-                string alias = null;
-                foreach (var a in pk12.Aliases)
-                {
-                    alias = ((string)a);
-                    if (pk12.IsKeyEntry(alias))
-                        break;
-                }
-
-                ICipherParameters pk = pk12.GetKey(alias).Key;
-                X509CertificateEntry[] ce = pk12.GetCertificateChain(alias);
-                Org.BouncyCastle.X509.X509Certificate[] chain = new Org.BouncyCastle.X509.X509Certificate[ce.Length];
-                for (int k = 0; k < ce.Length; ++k)
-                {
-                    chain[k] = ce[k].Certificate;
-                }
-
-                return new X509Certificate2(privateKeyBytes);
-            }
-            return null;
-        }
-    }
-    */
-
-
     internal class Program
     {
         public static readonly string DEST = @"C:\PoC\TWebApplication1\ConsoleApp1Firma\OpenSsl\Example\dest\";
@@ -79,13 +30,14 @@ namespace ConsoleApp1Firma
         };
 
         public void Sign(string src, string dest, X509Certificate[] chain, ICipherParameters pk,
-            string digestAlgorithm, PdfSigner.CryptoStandard subfilter, String reason, String location)
+            string digestAlgorithm, PdfSigner.CryptoStandard subfilter, String reason, String location, string firma= "sig", int posx=0)
         {
             PdfReader reader = new PdfReader(src);
-            PdfSigner signer = new PdfSigner(reader, new FileStream(dest, FileMode.Create), new StampingProperties());
+            PdfSigner signer = new PdfSigner(reader, new FileStream(dest, FileMode.Create), new StampingProperties().UseAppendMode());
+            
 
             // Create the signature appearance
-            Rectangle rect = new Rectangle(36, 500, 200, 100);
+            Rectangle rect = new Rectangle(36+ posx, 500, 200, 100);
             PdfSignatureAppearance appearance = signer.GetSignatureAppearance();
             appearance
                 .SetReason(reason)
@@ -96,7 +48,7 @@ namespace ConsoleApp1Firma
                 .SetReuseAppearance(false)
                 .SetPageRect(rect)
                 .SetPageNumber(1);
-            signer.SetFieldName("sig");
+            signer.SetFieldName(firma);
 
             IExternalSignature pks = new iText.Signatures.PrivateKeySignature(pk, digestAlgorithm);
 
@@ -143,18 +95,9 @@ namespace ConsoleApp1Firma
 
         public static void Main(string[] args)
         {
-            //Sign();
             SignKv();
-            //KeyVault();
         }
-        private static byte[] KeyVault() 
-        {
-            var clientSecret = new ClientSecretCredential("83a8a1a0-dfd1-43e6-976d-73889e9bc230", "fea0de43-0469-4577-a50e-c02d8f282442", "KeQ8Q~ZHka_TxGhfYhqseXx41RpSXYikczYYHaDq");
-            var client = new CertificateClient(vaultUri: new Uri("https://testbya.vault.azure.net/"), credential: clientSecret);
-            KeyVaultCertificateWithPolicy certificateWithPolicy = client.GetCertificate("ByACert");
-            //client.GetCertificate()
-            return certificateWithPolicy.Cer;
-        }
+      
         private static void SignKv()
         {
             DirectoryInfo directory = new DirectoryInfo(DEST);
@@ -184,9 +127,15 @@ namespace ConsoleApp1Firma
             }
 
             Program app = new Program();
-
-            app.Sign(SRC, DEST + RESULT_FILES[0], chain, pk, DigestAlgorithms.SHA256,
+            var sinFirma = @"C:\PoC\TWebApplication1\ConsoleApp1Firma\OpenSsl\Example\EjemploPdf.pdf";
+            app.Sign(sinFirma, DEST + RESULT_FILES[0], chain, pk, DigestAlgorithms.SHA256,
                 PdfSigner.CryptoStandard.CMS, "Test 1", "Ghent");
+            var conFirma = DEST + RESULT_FILES[0];
+            app.Sign(conFirma, DEST + "SegundaFirma.pdf", chain, pk, DigestAlgorithms.SHA256,
+            PdfSigner.CryptoStandard.CMS, "Test 2", "Bgr","sign2",220);
+
+
+
             app.Sign(SRC, DEST + RESULT_FILES[1], chain, pk, DigestAlgorithms.SHA512,
                 PdfSigner.CryptoStandard.CMS, "Test 2", "Ghent");
             app.Sign(SRC, DEST + RESULT_FILES[2], chain, pk, DigestAlgorithms.SHA256,
@@ -209,5 +158,5 @@ namespace ConsoleApp1Firma
         //$Env:AZURE_CLIENT_SECRET="BUd8Q~idwsJ3ABfXLkR.RSTIpga4L4mAJR2vhdsZ"
         //$Env:AZURE_TENANT_ID="a4305987-cf78-4f93-9d64-bf18af65397b"
     }
-    
+    */
 }
