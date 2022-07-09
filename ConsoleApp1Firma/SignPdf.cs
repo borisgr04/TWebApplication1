@@ -43,6 +43,7 @@ namespace ConsoleApp1Firma
             Console.Out.WriteLine("Document revision: " + signUtil.GetRevision(name) + " of "
                                   + signUtil.GetTotalRevisions());
             Console.Out.WriteLine("Integrity check OK? " + pkcs7.VerifySignatureIntegrityAndAuthenticity());
+            
             return pkcs7;
         }
 
