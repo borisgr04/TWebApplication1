@@ -198,7 +198,7 @@ namespace ConsoleApp1Firma
             List<X509Certificate> ks = new List<X509Certificate>();
             var parser = new X509CertificateParser();
             X509Certificate rootCert;
-            var kv = new KvCertificate();
+            var kv = new CertificadoSslService();
             var cer=kv.GetCer(); 
             using (var stream = new MemoryStream(cer))
             {

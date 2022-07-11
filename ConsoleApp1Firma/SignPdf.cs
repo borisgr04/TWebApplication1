@@ -14,43 +14,58 @@ namespace ConsoleApp1Firma
 {
     public enum SignEnum 
     {
-        Revisor,
-        Aprobador
+        Reviewer,
+        Approver
     }
+
+    public record SignPdfVerifyResponse (string SignatureFieldName, bool SignatureCoversWholeDocument, int DocumentRevision, int TotalRevisions, bool IntegrityAndAuthenticity);
+
+  
     public class SignPdf 
     {
-        public void Verify(byte[] document) 
+        #region Verify
+        public List<SignPdfVerifyResponse> Verify(byte[] document) 
         {
-
-            PdfDocument pdfDoc = new PdfDocument(new PdfReader(new MemoryStream(document)));
-            SignatureUtil signUtil = new SignatureUtil(pdfDoc);
-            IList<string> names = signUtil.GetSignatureNames();
+            var response= new List<SignPdfVerifyResponse>();
+            var pdfDoc = new PdfDocument(new PdfReader(new MemoryStream(document)));
+            var signUtil = new SignatureUtil(pdfDoc);
+            var names = signUtil.GetSignatureNames();
             
             foreach (string name in names)
             {
-                Console.Out.WriteLine("===== " + name + " =====");
-                VerifySignature(signUtil, name);
+               var result= VerifySignature(signUtil, name);
+               response.Add(result);
             }
 
             pdfDoc.Close();
+            return response;
         }
 
-        public PdfPKCS7 VerifySignature(SignatureUtil signUtil, String name)
+        private SignPdfVerifyResponse VerifySignature(SignatureUtil signUtil, string name)
         {
             PdfPKCS7 pkcs7 = signUtil.ReadSignatureData(name);
+            return new SignPdfVerifyResponse(name,signUtil.SignatureCoversWholeDocument(name), signUtil.GetRevision(name), signUtil.GetTotalRevisions(), pkcs7.VerifySignatureIntegrityAndAuthenticity());
+        }
+        #endregion Verify
 
-            Console.Out.WriteLine("Signature covers whole document: " + signUtil.SignatureCoversWholeDocument(name));
-            Console.Out.WriteLine("Document revision: " + signUtil.GetRevision(name) + " of "
-                                  + signUtil.GetTotalRevisions());
-            Console.Out.WriteLine("Integrity check OK? " + pkcs7.VerifySignatureIntegrityAndAuthenticity());
-            
-            return pkcs7;
+        #region Sign
+        public byte[] ApproverSign(byte[] documento, string name, string code, string telefono, string email) 
+        {
+            var reason = $"Revisado por: \n {name.ToUpper()} \n Revisión electrónica: {code} \n Fecha Revisión: {DateTime.Now}";
+            var configSign = new SignConfiguration(nameof(SignEnum.Approver), "Revisión electrónica:", new SignRectangule(100, 500, 250, 100));
+            return Sign(documento, SignEnum.Approver, reason, $"Cel - {telefono} - email: {email}", configSign);
         }
 
-        //
-        public byte[] Sign(byte[] documento, SignEnum type, string name, string code) 
+        public byte[] ReviewerSign(byte[] documento, string name, string code, string telefono, string email)
         {
-            var kv = new KvCertificate();
+            var razon = $"Aprobado por: \n {name.ToUpper()} \n Aprobación electrónica: {code} \n Fecha Aprobación: {DateTime.Now}";
+            var configSign = new SignConfiguration(nameof(SignEnum.Reviewer), "Aprobación electrónica:", new SignRectangule(320, 500, 250, 100));
+            return Sign(documento, SignEnum.Reviewer, razon, $"Cel - {telefono} -email: {email}", configSign);
+        }
+            
+        private static byte[] Sign(byte[] documento, SignEnum type, string reason, string contact, SignConfiguration signConfiguration) 
+        {
+            var kv = new CertificadoSslService();
             var pkc12 = kv.GetPkcs12().Result;
             var pk12 = new Pkcs12Store(new MemoryStream(pkc12), "".ToCharArray());
             string alias = null;
@@ -67,49 +82,33 @@ namespace ConsoleApp1Firma
             {
                 chain[k] = ce[k].Certificate;
             }
-            byte[] firmado=null;
-
-            if (type.Equals(SignEnum.Revisor)) 
-            {
-                firmado = Sign(documento, chain, pk, DigestAlgorithms.SHA256, PdfSigner.CryptoStandard.CMS, name, code, "revisor");
-            }
-            if (type.Equals(SignEnum.Aprobador))
-            {
-                firmado = Sign(documento, chain, pk, DigestAlgorithms.SHA256, PdfSigner.CryptoStandard.CMS, name, code, "aprobador", 220);
-            }
-
+            var firmado = Sign(documento, chain, pk, DigestAlgorithms.SHA384, PdfSigner.CryptoStandard.CMS, reason,  contact, signConfiguration);
             return firmado;
         }
 
-        public byte[] Sign(byte[] document,  X509Certificate[] chain, ICipherParameters pk,
-         string digestAlgorithm, PdfSigner.CryptoStandard subfilter, string reason, string location, string firma , int posx = 0)
+        private static byte[] Sign(byte[] document,  X509Certificate[] chain, ICipherParameters pk,
+         string digestAlgorithm, PdfSigner.CryptoStandard subfilter, string reason, string contact,   SignConfiguration signConfiguration)
         {
             var dest = new MemoryStream();
-            PdfReader reader = new PdfReader(new MemoryStream(document));
-            PdfSigner signer = new PdfSigner(reader, dest, new StampingProperties().UseAppendMode());
+            var reader = new PdfReader(new MemoryStream(document));
+            var signer = new PdfSigner(reader, dest, new StampingProperties().UseAppendMode());
+            var rect = new Rectangle(signConfiguration.Rectangulo.X, signConfiguration.Rectangulo.Y, signConfiguration.Rectangulo.Width, signConfiguration.Rectangulo.Height);
             
-            // Create the signature appearance
-            Rectangle rect = new Rectangle(100 + posx, 500, 200, 100);
-            
-            PdfSignatureAppearance appearance = signer.GetSignatureAppearance();
+            var appearance = signer.GetSignatureAppearance();
             appearance
-                .SetLocationCaption("Código:")
-                .SetLocation(location)
-                .SetReasonCaption("Revisor:")
+                .SetReasonCaption(signConfiguration.Nombre)
                 .SetReason(reason)
                 .SetSignatureCreator("Plataforma Certificados")
-                //.SetLayer2Text("Boris Gonzalez \n Codigo 10101 \n Fecha 12222")
                 .SetLayer2FontSize(9).SetLayer2Font(PdfFontFactory.CreateFont(StandardFonts.HELVETICA))
-                .SetContact("Nombre")
-
+                .SetContact(contact)
+                .SetLayer2Text(reason)
                 // Specify if the appearance before field is signed will be used
                 // as a background for the signed field. The "false" value is the default value.
                 .SetReuseAppearance(false)
                 .SetPageRect(rect)
                 .SetPageNumber(1);
 
-            signer.SetFieldName(firma);
-            
+            signer.SetFieldName(signConfiguration.SignFieldName);
 
             IExternalSignature pks = new global::iText.Signatures.PrivateKeySignature(pk, digestAlgorithm);
 
@@ -117,7 +116,16 @@ namespace ConsoleApp1Firma
             signer.SignDetached(pks, chain, null, null, null, 0, subfilter);
             return dest.ToArray();
         }
+        #endregion Sign
 
+        public record SignConfiguration 
+        (
+            string SignFieldName,
+            string Nombre,
+            SignRectangule Rectangulo
+        );
+
+        public record SignRectangule (float X, float Y, float Width, float Height);
     }
 
 }
