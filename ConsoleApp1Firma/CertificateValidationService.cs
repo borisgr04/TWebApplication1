@@ -1,7 +1,7 @@
-﻿/*
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using iText.Commons;
 using iText.Kernel.Pdf;
 using iText.Signatures;
@@ -12,16 +12,102 @@ using Org.BouncyCastle.X509;
 
 namespace ConsoleApp1Firma
 {
-    public class C5_03_CertificateValidation
+    public class LogWriter : TextWriter
+    {
+        public LogWriter()
+        {
+            Log = new List<string>();
+        }
+        public List<string> Log { get; set; }
+        public override Encoding Encoding => throw new NotImplementedException();
+        public override void WriteLine(string value)
+        {
+            Log.Add(value);
+        }
+    }
+    public record SignPdfVerifyResponse0(string SignatureFieldName, bool SignatureCoversWholeDocument, int DocumentRevision, int TotalRevisions, bool IntegrityAndAuthenticity);
+
+    /*
+     C:\PoC\TWebApplication1\ConsoleApp1Firma\OpenSsl\Example\dest\FirmadoConDosFirmas.pdf
+
+===== Reviewer =====
+Signature covers whole document: False
+Document revision: 1 of 2
+Integrity check OK? True
+Certificates verified against the KeyStore
+=== Certificate 0 ===
+Issuer: CN=ByACom
+Subject: CN=ByACom
+Valid from: 2022-07-07
+Valid to: 2023-07-07
+The certificate was valid at the time of signing.
+The certificate is still valid.
+=== Checking validity of the document at the time of signing ===
+The signing certificate couldn't be verified
+=== Checking validity of the document today ===
+The signing certificate couldn't be verified
+
+
+===== Approver =====
+Signature covers whole document: True
+Document revision: 2 of 2
+Integrity check OK? True
+Certificates verified against the KeyStore
+=== Certificate 0 ===
+Issuer: CN=ByACom
+Subject: CN=ByACom
+Valid from: 2022-07-07
+Valid to: 2023-07-07
+The certificate was valid at the time of signing.
+The certificate is still valid.
+=== Checking validity of the document at the time of signing ===
+The signing certificate couldn't be verified
+=== Checking validity of the document today ===
+The signing certificate couldn't be verified
+     */
+
+
+    public class CertificateValidationService
     {
         //public static readonly string ROOT = "../../../resources/encryption/rootRsa.cer";
         public static readonly string EXAMPLE = @"C:\PoC\TWebApplication1\ConsoleApp1Firma\OpenSsl\Example\dest\FirmadoConDosFirmas.pdf";
+        static LogWriter Log = new LogWriter();
+
+        public static void Main(String[] args)
+        {
+            CertificateValidationService app = new CertificateValidationService();
+
+            // Set up logger to show log messages from OCSPVerifier and CLRVerifier classes 
+            SetUpLogger();
+
+            // Create your own root certificate store and add certificates
+            List<X509Certificate> ks = new List<X509Certificate>();
+            var parser = new X509CertificateParser();
+            X509Certificate rootCert;
+            var kv = new CertificadoSslService();
+            var cer = kv.GetCer();
+            using (var stream = new MemoryStream(cer))
+            {
+                rootCert = parser.ReadCertificate(stream);
+            }
+
+            ks.Add(rootCert);
+            app.SetKeyStore(ks);
+
+            
+
+            app.VerifySignatures(EXAMPLE);
+
+            // Reset logger to the default value
+            ResetLogger();
+        }
+
 
         public static TextWriter OUT_STREAM = Console.Out;
         private static ILoggerFactory defaultLoggerFactory;
         private List<X509Certificate> ks;
 
-        public void VerifySignatures(string path)
+        public void VerifySignatures(String path)
         {
             PdfDocument pdfDoc = new PdfDocument(new PdfReader(path));
             SignatureUtil signUtil = new SignatureUtil(pdfDoc);
@@ -188,33 +274,6 @@ namespace ConsoleApp1Firma
             }
         }
 
-        public static void Main(String[] args)
-        {
-            C5_03_CertificateValidation app = new C5_03_CertificateValidation();
-
-            // Set up logger to show log messages from OCSPVerifier and CLRVerifier classes 
-            SetUpLogger();
-
-            // Create your own root certificate store and add certificates
-            List<X509Certificate> ks = new List<X509Certificate>();
-            var parser = new X509CertificateParser();
-            X509Certificate rootCert;
-            var kv = new CertificadoSslService();
-            var cer=kv.GetCer(); 
-            using (var stream = new MemoryStream(cer))
-            {
-                rootCert = parser.ReadCertificate(stream);
-            }
-
-            ks.Add(rootCert);
-            app.SetKeyStore(ks);
-
-            app.VerifySignatures(EXAMPLE);
-
-            // Reset logger to the default value
-            ResetLogger();
-        }
-
         private void SetKeyStore(List<X509Certificate> ks)
         {
             this.ks = ks;
@@ -224,7 +283,7 @@ namespace ConsoleApp1Firma
         {
             defaultLoggerFactory = ITextLogManager.GetLoggerFactory();
             ILoggerFactory customLoggerFactory = new LoggerFactory();
-            customLoggerFactory.AddProvider(new CustomLoggerProvider(OUT_STREAM));
+            customLoggerFactory.AddProvider(new CustomLoggerProvider(Log));
             ITextLogManager.SetLoggerFactory(customLoggerFactory);
         }
 
@@ -284,4 +343,4 @@ namespace ConsoleApp1Firma
             }
         }
     }
-}*/
+}
