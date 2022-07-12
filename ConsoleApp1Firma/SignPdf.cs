@@ -49,19 +49,20 @@ namespace ConsoleApp1Firma
         #endregion Verify
 
         #region Sign
-        public byte[] ApproverSign(byte[] documento, string name, string code, string telefono, string email) 
-        {
-            var reason = $"Aprobado por: \n {name.ToUpper()} \n Aprobación electrónica: {code} \n Fecha Aprobación: {DateTime.Now}";
-            var configSign = new SignConfiguration(nameof(SignEnum.Approver), "Revisión electrónica:", new SignRectangule(100, 500, 250, 100));
-            return Sign(documento, SignEnum.Approver, reason, $"Cel - {telefono} - email: {email}", configSign);
-        }
-
         public byte[] ReviewerSign(byte[] documento, string name, string code, string telefono, string email)
         {
             var reason = $"Revisado por: \n {name.ToUpper()} \n Revisión electrónica: {code} \n Fecha Revisión: {DateTime.Now}";
-            var configSign = new SignConfiguration(nameof(SignEnum.Reviewer), "Aprobación electrónica:", new SignRectangule(320, 500, 250, 100));
+            var configSign = new SignConfiguration(nameof(SignEnum.Reviewer), "Aprobación electrónica:", new SignRectangule(100, 500, 250, 100));
             return Sign(documento, SignEnum.Reviewer, reason, $"Cel - {telefono} -email: {email}", configSign);
         }
+        public byte[] ApproverSign(byte[] documento, string name, string code, string telefono, string email) 
+        {
+            var reason = $"Aprobado por: \n {name.ToUpper()} \n Aprobación electrónica: {code} \n Fecha Aprobación: {DateTime.Now}";
+            var configSign = new SignConfiguration(nameof(SignEnum.Approver), "Revisión electrónica:", new SignRectangule(320, 500, 250, 100));
+            return Sign(documento, SignEnum.Approver, reason, $"Cel - {telefono} - email: {email}", configSign);
+        }
+
+        
             
         private static byte[] Sign(byte[] documento, SignEnum type, string reason, string contact, SignConfiguration signConfiguration) 
         {

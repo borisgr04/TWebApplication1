@@ -43,6 +43,9 @@
 	  <None Update="OpenSsl\Example\dest\hello_signed8.pdf">
 	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 	  </None>
+	  <None Update="OpenSsl\Example\EjemploPdf.pdf">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
 	  <None Update="OpenSsl\Example\private.key">
 	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 	  </None>
